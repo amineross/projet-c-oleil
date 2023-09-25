@@ -6,7 +6,7 @@
 typedef struct Spaceship 
 {
     int pos_x, pos_y;
-    int height, width = 10;
+    int height, width;
     float speed; // {2; 8}
     float velocity; // {1/2 init speed; 2x init speed}
 } Spaceship;
