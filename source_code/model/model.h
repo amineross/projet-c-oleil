@@ -33,5 +33,20 @@ typedef struct SolarSystem
     Planet * planets;
 } SolarSystem;
 
+typedef struct Entry 
+{
+    int pos_x, pos_y;
+    int height, width;
+} Entry;
+
+typedef struct Universe 
+{
+    int win_height, win_width;
+    Entry start, end;
+    int nb_solar_system;
+    SolarSystem* solar_systems;
+} Universe;
+
+
 
 
