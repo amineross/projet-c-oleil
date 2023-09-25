@@ -1,52 +1,95 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#pragma once
+#ifdef _WIN32
+#  define INLINE inline
+#else
+#  define INLINE static inline
+#endif
 
-
-typedef struct Spaceship 
-{
+typedef struct {
+    /* XY coordinates */
     int pos_x, pos_y;
-    int height, width;
-    float speed; // {2; 8}
-    float velocity; // {1/2 init speed; 2x init speed}
-} Spaceship;
+    /* the radius of the planet =
+    = its mass = its orbital period */
+    int radius_mass_orbital_period;
+    /* the orbit of the planet*/
+    int orbit_radius;
+}Planet;
 
-typedef struct Planet 
-{
+typedef struct {
+    /* XY coordinates */
     int pos_x, pos_y;
+    /* the radius of the star */
     int radius;
-    int orbit;
-    int mass;
-    int orbit_duration;
-} Planet;
+}Star;
 
-typedef struct Star 
-{
-    int pos_x, pos_y;
-    int radius;
-} Star;
-
-typedef struct SolarSystem 
-{
-    int NB_PLANET;
+typedef struct {
+    /* the center of the solar system*/
     Star sun;
-    Planet * planets;
-} SolarSystem;
+    /* the total number of planets in the solar system */
+    int nb_planets;
+    /* the planets register */
+    Planet* planets;
+}Solar_system;
 
-typedef struct Entry 
-{
+typedef struct {
+    /* XY coordinates */
     int pos_x, pos_y;
+    /* default dimensions of the spaceship */
     int height, width;
-} Entry;
+    /* the velocity of the spaceship */
+    int velocity;
+}Spaceship;
 
-typedef struct Universe 
-{
+typedef struct {
+    /* XY coordinates */
+    int pos_x, pos_y;
+    /* default dimensions*/
+    int height, width;
+
+}Start;
+
+typedef struct {
+    /* XY coordinates */
+    int pos_x, pos_y;
+    /* default dimensions*/
+    int height, width;
+
+}Finish;
+
+typedef struct {
+    /* the total number of solar systems in the universe */
+    int nb_solar_systems;
+    /* the solar systems register */
+    Solar_system* solar_systems;
+    Start* start;
+    Finish* finish;
     int win_height, win_width;
-    Entry start, end;
-    int nb_solar_system;
-    SolarSystem* solar_systems;
-} Universe;
+}Universe;
 
+typedef struct Game_s
+{
+    Universe* universe;
+    Spaceship* spaceship;
+    /// @brief Etat de la partie.
+    /// Les valeurs possibles sont d�finies dans GameState.
+    int state;
+} Game;
 
+typedef enum GameState_e
+{
+    /// @brief Indique que la partie est en cours.
+    GAME_IN_PROGRESS,
+    /// @brief Indique que la partie s'est termin�e.
+    GAME_IS_OVER
+} GameState;
 
+Universe* file(char* file_name);
+void free_universe(Universe* universe);
+Game* Game_New();
+void Game_UpdateState(Game* self);
+Spaceship* Spaceship_New(int pos_x, int pos_y);
 
+INLINE int Game_GetState(Game* self)
+{
+    return self->state;
+}
