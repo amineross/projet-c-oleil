@@ -128,14 +128,13 @@ int main(int argc, char* argv[])
         SDL_Init(SDL_INIT_VIDEO);
         init_window(game);
         setup(game);
-        while (Game_GetState(game) == GAME_IN_PROGRESS)
-        {
-            process_input(game);
-            update();
-            render(game);
-            printf("%d %d\n", game->spaceship->pos_x, game->spaceship->pos_y);
-            Game_UpdateState(game);
-        }
+
+        process_input(game);
+        update();
+        render(game);
+        printf("%d %d\n", game->spaceship->pos_x, game->spaceship->pos_y);
+        Game_UpdateState(game);
+        
         SDL_DestroyWindow(window);
         SDL_DestroyRenderer(renderer);
         SDL_Quit();
