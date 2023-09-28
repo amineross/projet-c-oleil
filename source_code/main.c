@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "model.h"
+#include <stdbool.h>
 #include "SDL.h"
 #include "SDL2_gfxPrimitives.h"
 
@@ -104,23 +105,32 @@ void render(Game* game)
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer, &player);
 
+
+
+    // Finish : White
+    SDL_Rect finish = {
+        game->universe->finish->pos_x,
+        game->universe->finish->pos_y,
+        game->universe->finish->width = 10,
+        game->universe->finish->height = 10
+    };
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(renderer, &finish);
+
     for (int i = 0; i < game->universe->nb_solar_systems; i++)
     {
         filledCircleRGBA(renderer, game->universe->solar_systems[i].sun.pos_x, game->universe->solar_systems[i].sun.pos_y, game->universe->solar_systems[i].sun.radius, 255, 215, 0, 255);
         for (int j = 0; j < game->universe->solar_systems[i].nb_planets; j++)
         {
-            filledCircleRGBA(renderer, game->universe->solar_systems[i].sun.pos_x, game->universe->solar_systems[i].sun.pos_y - (game->universe->solar_systems[i].sun.radius + 50), game->universe->solar_systems[i].planets[j].radius_mass_orbital_period, 0, 10, 255, 255);
+            int orbit_radius = abs(game->universe->solar_systems[i].planets[j].orbit_radius); // Prend la valeur absolue du rayon de l'orbite
+            filledCircleRGBA(renderer, game->universe->solar_systems[i].sun.pos_x, game->universe->solar_systems[i].sun.pos_y - orbit_radius, game->universe->solar_systems[i].planets[j].radius_mass_orbital_period, 0, 10, 255, 255);
         }
     }
-    //filledCircleColor(renderer, game., 40, 30, 0xFFFF0000);
-
-
     SDL_RenderPresent(renderer);
 }
 
 int main(int argc, char* argv[])
 {
-   // SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Hello World", "yay", NULL);
 	Game* game = Game_New();
 
 	while (Game_GetState(game) == GAME_IN_PROGRESS)
@@ -128,13 +138,14 @@ int main(int argc, char* argv[])
         SDL_Init(SDL_INIT_VIDEO);
         init_window(game);
         setup(game);
-
-        process_input(game);
-        update();
-        render(game);
-        printf("%d %d\n", game->spaceship->pos_x, game->spaceship->pos_y);
-        Game_UpdateState(game);
-        
+        while (Game_GetState(game) == GAME_IN_PROGRESS)
+        {
+            process_input(game);
+            update();
+            render(game);
+            //printf("%d %d\n", game->spaceship->pos_x, game->spaceship->pos_y);
+            Game_UpdateState(game);
+        }
         SDL_DestroyWindow(window);
         SDL_DestroyRenderer(renderer);
         SDL_Quit();
