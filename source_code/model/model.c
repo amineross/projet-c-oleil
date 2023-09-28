@@ -1,6 +1,7 @@
 #include "model.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <assert.h>
 
 Universe* file(char* file_name)
@@ -128,7 +129,11 @@ Game* Game_New()
 
 void Game_UpdateState(Game* self)
 {
-	if ((self->spaceship->pos_x == self->universe->finish->pos_x) && (self->spaceship->pos_y == self->universe->finish->pos_y))
+	int dx = self->spaceship->pos_x - self->universe->finish->pos_x;
+	int dy = self->spaceship->pos_y - self->universe->finish->pos_y;
+	int distance = sqrt(pow(dx, 2) + pow(dy, 2));
+
+	if (distance <= 5)
 	{
 		self->state = GAME_IS_OVER;
 	}
