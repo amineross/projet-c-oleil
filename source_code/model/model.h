@@ -13,8 +13,6 @@ typedef struct {
     int radius_mass_orbital_period;
     /* the orbit of the planet*/
     int orbit_radius;
-    /* Current angle of the planet */
-    float angle;
 }Planet;
 
 typedef struct {
@@ -90,7 +88,7 @@ void free_universe(Universe* universe);
 Game* Game_New();
 void Game_UpdateState(Game* self);
 Spaceship* Spaceship_New(int pos_x, int pos_y);
-void update_planets(Solar_system* solar_system, float delta_time);
+int update_planets(Planet* planet, Star* sun, int height, float delta_time);
 
 INLINE int Game_GetState(Game* self)
 {
