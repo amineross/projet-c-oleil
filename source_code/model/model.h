@@ -13,6 +13,8 @@ typedef struct {
     int radius_mass_orbital_period;
     /* the orbit of the planet*/
     int orbit_radius;
+    /* Current angle of the planet */
+    float angle;
 }Planet;
 
 typedef struct {
@@ -71,7 +73,7 @@ typedef struct Game_s
     Universe* universe;
     Spaceship* spaceship;
     /// @brief Etat de la partie.
-    /// Les valeurs possibles sont d�finies dans GameState.
+    /// Les valeurs possibles sont définies dans GameState.
     int state;
 } Game;
 
@@ -79,7 +81,7 @@ typedef enum GameState_e
 {
     /// @brief Indique que la partie est en cours.
     GAME_IN_PROGRESS,
-    /// @brief Indique que la partie s'est termin�e.
+    /// @brief Indique que la partie s'est terminée.
     GAME_IS_OVER
 } GameState;
 
@@ -88,6 +90,7 @@ void free_universe(Universe* universe);
 Game* Game_New();
 void Game_UpdateState(Game* self);
 Spaceship* Spaceship_New(int pos_x, int pos_y);
+void update_planets(Solar_system* solar_system, float delta_time);
 
 INLINE int Game_GetState(Game* self)
 {
