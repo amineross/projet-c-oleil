@@ -10,7 +10,7 @@ SDL_Renderer* renderer = NULL;
 int          last_frame_time;
 float             delta_time;
 bool update_planets_start = false;
-
+float time = 0;
 #define FPS             60
 #define FRAME_TIME      (1000 / FPS)
 
