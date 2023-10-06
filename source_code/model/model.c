@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define M_PI 3.14159265358979323846
 
 Universe* file(char* file_name)
 {
@@ -41,7 +45,7 @@ Universe* file(char* file_name)
 		exit(1);
 	}
 
-	char nbsystem[13] = { 0 };
+	char nbsystem[17] = { 0 };
 	(void)fscanf(file, "%s %d", nbsystem, &universe->nb_solar_systems);
 	if (universe->nb_solar_systems < 0)
 	{
@@ -99,7 +103,6 @@ Universe* file(char* file_name)
 			}
 		}
 		universe->solar_systems[i].planets = planets;
-
 	}
 	
 	fclose(file);
@@ -108,10 +111,8 @@ Universe* file(char* file_name)
 
 void free_universe(Universe* universe)
 {
-	for (int i = 0; i < universe->nb_solar_systems; i++)
-	{
-		free(universe->solar_systems[i].planets);
-	}
+	free(universe->start);
+	free(universe->finish);
 	free(universe->solar_systems);
 	free(universe);
 }
@@ -122,8 +123,16 @@ Game* Game_New()
 	assert(self);
 	self->universe = file("config.txt");
 	self->spaceship = Spaceship_New(self->universe->start->pos_x, self->universe->start->pos_y);
+	for (int i = 0; i < self->universe->nb_solar_systems; i++)
+	{
+		for (int j = 0; j < self->universe->solar_systems[i].nb_planets; j++)
+		{
+			self->universe->solar_systems[i].planets[j].pos_x = self->universe->solar_systems[i].sun.pos_x;
+			self->universe->solar_systems[i].planets[j].pos_y = self->universe->solar_systems[i].sun.pos_y - abs(self->universe->solar_systems[i].planets[j].orbit_radius);
+		}
+	}
 	self->state = GAME_IN_PROGRESS;
-	//Input* input = Input_New();
+
 	return self;
 }
 
@@ -134,8 +143,45 @@ void Game_UpdateState(Game* self)
 	int distance = sqrt(pow(dx, 2) + pow(dy, 2));
 
 	if (distance <= 5)
-	{
 		self->state = GAME_IS_OVER;
+
+	for (int i = 0; i < self->universe->nb_solar_systems; i++)
+	{
+		if (self->spaceship->pos_x >= self->universe->solar_systems[i].sun.pos_x - self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_x <= self->universe->solar_systems[i].sun.pos_x + self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_y >= self->universe->solar_systems[i].sun.pos_y - self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_y <= self->universe->solar_systems[i].sun.pos_y + self->universe->solar_systems[i].sun.radius)
+		{
+			self->state = GAME_IS_OVER;
+		}
+
+		for (int j = 0; j < self->universe->solar_systems[i].nb_planets; j++)
+		{
+			if (self->spaceship->pos_x >= self->universe->solar_systems[i].planets[j].pos_x - self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_x <= self->universe->solar_systems[i].planets[j].pos_x + self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_y >= self->universe->solar_systems[i].planets[j].pos_y - self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_y <= self->universe->solar_systems[i].planets[j].pos_y + self->universe->solar_systems[i].planets[j].radius_mass_orbital_period)
+			{
+				self->state = GAME_IS_OVER;
+			}
+		}
+	}
+
+	if (self->spaceship->pos_x < 0)
+	{
+		self->spaceship->pos_x = self->universe->win_width;
+	}
+	if (self->spaceship->pos_x > self->universe->win_width)
+	{
+		self->spaceship->pos_x = 0;
+	}
+	if (self->spaceship->pos_y < 0)
+	{
+		self->spaceship->pos_y = self->universe->win_height;
+	}
+	if (self->spaceship->pos_y > self->universe->win_height)
+	{
+		self->spaceship->pos_y = 0;
 	}
 }
 
@@ -147,4 +193,23 @@ Spaceship* Spaceship_New(int pos_x, int pos_y)
 	self->pos_y = pos_y;
 	self->velocity = 5;
 	return self;
+}
+
+int update_planets(Planet* planet, Star* sun, float delta_time)
+{
+	if (!planet) return -1;
+	int positive = 1;
+	float orbital_angular_velocity = 0;
+
+	if (planet->orbit_radius < 0) positive = 0;
+
+	orbital_angular_velocity = 2 * (float)M_PI / planet->radius_mass_orbital_period;
+
+	if (positive == 1) {
+		orbital_angular_velocity = -orbital_angular_velocity;
+	}
+
+	planet->pos_x = sun->pos_x + abs(planet->orbit_radius) * cos(orbital_angular_velocity * delta_time - (float)M_PI/2);
+	planet->pos_y = sun->pos_y + abs(planet->orbit_radius) * sin(orbital_angular_velocity * delta_time - (float)M_PI/2);
+	return 0;
 }
