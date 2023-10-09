@@ -4,13 +4,17 @@
 #include "vue_controller.h"
 #include <SDL.h>
 #include "SDL2_gfxPrimitives.h"
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 int          last_frame_time;
 float             delta_time;
-bool update_planets_start = false;
+// Déclaration des variables pour le suivi des FPS
 float time = 0;
+
 #define FPS             60
 #define FRAME_TIME      (1000 / FPS)
 
@@ -50,6 +54,7 @@ void setup(Game* game)
     game->universe->start->height = 10;
     game->universe->finish->width = 10;
     game->universe->finish->height = 10;
+    game->score = 0;
 }
 
 void process_input(Game* game)
@@ -65,17 +70,27 @@ void process_input(Game* game)
     case SDL_KEYDOWN:
         if (e.key.keysym.sym == SDLK_ESCAPE)
             game->state = GAME_IS_OVER;
-        if (e.key.keysym.sym == SDLK_d)     // ->
-            game->spaceship->pos_x += 5;   //
-        if (e.key.keysym.sym == SDLK_q)     // <-
-            game->spaceship->pos_x -= 5;   // 
-        if (e.key.keysym.sym == SDLK_s)     // DOWN
-            game->spaceship->pos_y += 5;   //
-        if (e.key.keysym.sym == SDLK_z)     // UP
-            game->spaceship->pos_y -= 5;   //
         if (e.key.keysym.sym == SDLK_SPACE) // SPACE
-            update_planets_start = true;//
-        break;
+            game->update_planets_start = true;//
+        if (game->update_planets_start)
+        {
+            if (e.key.keysym.sym == SDLK_d) // ->
+            {
+                game->spaceship->pos_x += 5;
+                game->score++;
+            }
+            if (e.key.keysym.sym == SDLK_q) // <-
+            {
+                game->spaceship->pos_x -= 5;
+                game->score++;
+            }// 
+            if (e.key.keysym.sym == SDLK_s)     // DOWN
+                game->spaceship->pos_y += 5;   //
+            if (e.key.keysym.sym == SDLK_z)     // UP
+                game->spaceship->pos_y -= 5;   //
+            break;
+        }
+        
     }
 }
 
@@ -93,7 +108,7 @@ void update(Game* game)
 
     delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
 
-   if (update_planets_start)
+   if (game->update_planets_start)
     {
         for (int i = 0; i < game->universe->nb_solar_systems; i++)
         {
@@ -106,6 +121,24 @@ void update(Game* game)
             }
         }
     }
+
+   // Update title window with FPS and score 
+   //number of space is 522 
+   char window_title[200];
+   sprintf(window_title, "                                                                                                                                  ProjetC_oleil | FPS : %d | Score : %d", FPS, game->score);
+
+   // Update title window
+   SDL_SetWindowTitle(window, window_title);
+
+   // Check if player is out of the window teleport him to the other side
+   if (game->spaceship->pos_x > game->universe->win_width)
+	   game->spaceship->pos_x = 0;
+   if (game->spaceship->pos_x < 0)
+       game->spaceship->pos_x = game->universe->win_width;
+   if (game->spaceship->pos_y > game->universe->win_height)
+       game->spaceship->pos_y = 0;
+   if (game->spaceship->pos_y < 0)
+       game->spaceship->pos_y = game->universe->win_height;
 }
 
 void render(Game* game)
@@ -113,14 +146,14 @@ void render(Game* game)
     // Background : BLACK
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-
     //Rect start
     rectangleRGBA(renderer, game->universe->start->pos_x, game->universe->start->pos_y, game->universe->start->pos_x + game->universe->start->width, game->universe->start->pos_y + game->universe->start->height, 255, 255, 255, 255);
     //Rect player
     boxRGBA(renderer, game->spaceship->pos_x, game->spaceship->pos_y, game->spaceship->pos_x + game->spaceship->width, game->spaceship->pos_y + game->spaceship->height, 255, 0, 0, 255);
     //Rect finish
     rectangleRGBA(renderer, game->universe->finish->pos_x, game->universe->finish->pos_y, game->universe->finish->pos_x + game->universe->finish->height, game->universe->finish->pos_y + game->universe->finish->width, 255, 255, 255, 255);
-
+    //Rect window
+    rectangleRGBA(renderer, 10, 10, game->universe->win_width -10, game->universe->win_height-10, 255, 255, 255, 255);
     for (int i = 0; i < game->universe->nb_solar_systems; i++)
     {
         filledCircleRGBA(renderer, game->universe->solar_systems[i].sun.pos_x, game->universe->solar_systems[i].sun.pos_y, game->universe->solar_systems[i].sun.radius, 255, 215, 0, 255);
