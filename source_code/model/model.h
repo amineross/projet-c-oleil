@@ -1,102 +1,207 @@
-#pragma once
-#include <stdbool.h>
-#ifdef _WIN32
-#  define INLINE inline
-#else
-#  define INLINE static inline
-#endif
+#include "model.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <time.h>
 
-typedef struct {
-    /* XY coordinates */
-    int pos_x, pos_y;
-    /* the radius of the planet =
-    = its mass = its orbital period */
-    int radius_mass_orbital_period;
-    /* the orbit of the planet*/
-    int orbit_radius;
-}Planet;
+#define M_PI 3.14159265358979323846
 
-typedef struct {
-    /* XY coordinates */
-    int pos_x, pos_y;
-    /* the radius of the star */
-    int radius;
-}Star;
-
-typedef struct {
-    /* the center of the solar system*/
-    Star sun;
-    /* the total number of planets in the solar system */
-    int nb_planets;
-    /* the planets register */
-    Planet* planets;
-}Solar_system;
-
-typedef struct {
-    /* XY coordinates */
-    int pos_x, pos_y;
-    /* default dimensions of the spaceship */
-    int height, width;
-    /* the velocity of the spaceship */
-    int velocity;
-    /* the angle of the spaceship */
-    double angle;
-}Spaceship;
-
-typedef struct {
-    /* XY coordinates */
-    int pos_x, pos_y;
-    /* default dimensions*/
-    int height, width;
-
-}Start;
-
-typedef struct {
-    /* XY coordinates */
-    int pos_x, pos_y;
-    /* default dimensions*/
-    int height, width;
-
-}Finish;
-
-typedef struct {
-    /* the total number of solar systems in the universe */
-    int nb_solar_systems;
-    /* the solar systems register */
-    Solar_system* solar_systems;
-    Start* start;
-    Finish* finish;
-    int win_height, win_width;
-}Universe;
-
-typedef struct Game_s
+Universe* file(char* file_name)
 {
-    Universe* universe;
-    Spaceship* spaceship;
-    /// @brief Etat de la partie.
-    /// Les valeurs possibles sont définies dans GameState.
-    bool update_planets_start;
-    int state;
-    int score;
-} Game;
+	FILE* file = fopen(file_name, "r");
+	if (file == NULL)
+	{
+		printf("Error: file not found\n");
+		exit(1);
+	}
 
-typedef enum GameState_e
+	Universe* universe = (Universe*)malloc(sizeof(Universe));
+	assert(universe);
+	universe->start = (Start*)malloc(sizeof(Start));
+	assert(universe->start);
+	universe->finish = (Finish*)malloc(sizeof(Finish));
+	assert(universe->finish);
+
+	char line[9] = { 0 };
+
+	
+	(void)fscanf(file, "%s %d %d", line, &universe->win_width, &universe->win_height);
+	char line2[6] = { 0 };
+	(void)fscanf(file, "%s %d %d", line2, &universe->start->pos_x, &universe->start->pos_y);
+	printf("%d %d\n", universe->start->pos_x, universe->start->pos_y);
+	if (universe->start->pos_x < 0 || universe->start->pos_x > universe->win_width || universe->start->pos_y < 0 || universe->start->pos_y > universe->win_height)
+	{
+		printf("Error: fermeture du fichier\n");
+		exit(1);
+	}
+	char line3[4] = { 0 };
+	(void)fscanf(file, "%s %d %d", line3, &universe->finish->pos_x, &universe->finish->pos_y);
+	printf("%d %d\n", universe->finish->pos_x, universe->finish->pos_y);
+	if (universe->finish->pos_x < 0 || universe->finish->pos_x > universe->win_height || universe->finish->pos_y < 0 || universe->finish->pos_y > universe->win_height)
+	{
+		printf("Error: fermeture du fichier\n");
+		exit(1);
+	}
+
+	char nbsystem[17] = { 0 };
+	(void)fscanf(file, "%s %d", nbsystem, &universe->nb_solar_systems);
+	if (universe->nb_solar_systems < 0)
+	{
+		printf("Error\n");
+		exit(1);
+	}
+
+	Solar_system* solar_system = (Solar_system*)calloc(universe->nb_solar_systems, sizeof(Solar_system));
+	for (int i = 0; i < universe->nb_solar_systems; i++)
+	{
+		universe->solar_systems = solar_system;
+	}
+	assert(solar_system);
+	char star_pos_s[9] = { 0 };
+	char star_radius_s[12] = { 0 };
+	char nbplanet_s[10] = { 0 };
+	char planetradius_s[14] = { 0 };
+	char planetorbit_s[13] = { 0 };
+
+	for (int i = 0; i < universe->nb_solar_systems; i++)
+	{
+		(void)fscanf(file, "%s %d %d", star_pos_s, &solar_system[i].sun.pos_x, &solar_system[i].sun.pos_y);
+		if (solar_system[i].sun.pos_x < 0 || solar_system[i].sun.pos_x > universe->win_width || solar_system[i].sun.pos_y < 0 || solar_system[i].sun.pos_y > universe->win_height)
+		{
+			printf("Error\n");
+			exit(1);
+		}
+		(void)fscanf(file, "%s %d", star_radius_s, &solar_system[i].sun.radius);
+		if (solar_system[i].sun.radius < 0)
+		{
+			printf("Error\n");
+			exit(1);
+		}
+		(void)fscanf(file, "%s %d", nbplanet_s, &solar_system[i].nb_planets);
+		if (solar_system[i].nb_planets < 0)
+		{
+			printf("Error\n");
+			exit(1);
+		}
+		Planet* planets = (Planet*)calloc(solar_system[i].nb_planets, sizeof(Planet));
+		assert(planets);
+		for (int j = 0; j < solar_system[i].nb_planets; j++)
+		{
+			(void)fscanf(file, "%s %d", planetradius_s, &planets[j].radius_mass_orbital_period);
+			if (planets[j].radius_mass_orbital_period < 0 || planets[j].radius_mass_orbital_period >= universe->win_width || planets[j].radius_mass_orbital_period >= universe->win_height)
+			{
+				printf("Error\n");
+				exit(1);
+			}
+			(void)fscanf(file, "%s %d", planetorbit_s, &planets[j].orbit_radius);
+			if (planets[j].orbit_radius >= universe->win_width || planets[j].orbit_radius >= universe->win_height)
+			{
+				printf("Error\n");
+				exit(1);
+			}
+		}
+		universe->solar_systems[i].planets = planets;
+	}
+	
+	fclose(file);
+	return universe;
+}
+
+void free_universe(Universe* universe)
 {
-    /// @brief Indique que la partie est en cours.
-    GAME_IN_PROGRESS,
-    /// @brief Indique que la partie s'est terminée.
-    GAME_IS_OVER
-} GameState;
+	free(universe->start);
+	free(universe->finish);
+	free(universe->solar_systems);
+	free(universe);
+}
 
-Universe* file(char* file_name);
-void free_universe(Universe* universe);
-Game* Game_New();
-void Game_UpdateState(Game* self);
-Spaceship* Spaceship_New(int pos_x, int pos_y);
-int update_planets(Planet* planet, Star* sun, float delta_time);
-void random_spaceship_angle(Spaceship* spaceship);
-
-INLINE int Game_GetState(Game* self)
+Game* Game_New()
 {
-    return self->state;
+	Game* self = (Game*)calloc(1, sizeof(Game));
+	assert(self);
+	self->universe = file("config.txt");
+	self->spaceship = Spaceship_New(self->universe->start->pos_x, self->universe->start->pos_y);
+	for (int i = 0; i < self->universe->nb_solar_systems; i++)
+	{
+		for (int j = 0; j < self->universe->solar_systems[i].nb_planets; j++)
+		{
+			self->universe->solar_systems[i].planets[j].pos_x = self->universe->solar_systems[i].sun.pos_x;
+			self->universe->solar_systems[i].planets[j].pos_y = self->universe->solar_systems[i].sun.pos_y - abs(self->universe->solar_systems[i].planets[j].orbit_radius);
+		}
+	}
+	self->state = GAME_IN_PROGRESS;
+
+	return self;
+}
+
+void Game_UpdateState(Game* self)
+{
+	int dx = self->spaceship->pos_x - self->universe->finish->pos_x;
+	int dy = self->spaceship->pos_y - self->universe->finish->pos_y;
+	int distance = sqrt(pow(dx, 2) + pow(dy, 2));
+
+	if (distance <= 5)
+		self->state = GAME_IS_OVER;
+
+	for (int i = 0; i < self->universe->nb_solar_systems; i++)
+	{
+		if (self->spaceship->pos_x >= self->universe->solar_systems[i].sun.pos_x - self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_x <= self->universe->solar_systems[i].sun.pos_x + self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_y >= self->universe->solar_systems[i].sun.pos_y - self->universe->solar_systems[i].sun.radius
+			&& self->spaceship->pos_y <= self->universe->solar_systems[i].sun.pos_y + self->universe->solar_systems[i].sun.radius)
+		{
+			self->state = GAME_IS_OVER;
+		}
+
+		for (int j = 0; j < self->universe->solar_systems[i].nb_planets; j++)
+		{
+			if (self->spaceship->pos_x >= self->universe->solar_systems[i].planets[j].pos_x - self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_x <= self->universe->solar_systems[i].planets[j].pos_x + self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_y >= self->universe->solar_systems[i].planets[j].pos_y - self->universe->solar_systems[i].planets[j].radius_mass_orbital_period 
+				&& self->spaceship->pos_y <= self->universe->solar_systems[i].planets[j].pos_y + self->universe->solar_systems[i].planets[j].radius_mass_orbital_period)
+			{
+				self->state = GAME_IS_OVER;
+			}
+		}
+	}
+	printf("Spaceship position : %d %d\n", self->spaceship->pos_x, self->spaceship->pos_y);
+}
+
+Spaceship* Spaceship_New(int pos_x, int pos_y)
+{
+	Spaceship* self = (Spaceship*)calloc(1, sizeof(Spaceship));
+	assert(self);
+	self->pos_x = pos_x;
+	self->pos_y = pos_y;
+	self->velocity = 5;
+	return self;
+}
+
+int update_planets(Planet* planet, Star* sun, float delta_time)
+{
+	if (!planet) return -1;
+	int positive = 1;
+	float orbital_angular_velocity = 0;
+
+	if (planet->orbit_radius < 0) positive = 0;
+
+	orbital_angular_velocity = 2 * (float)M_PI / planet->radius_mass_orbital_period;
+
+	if (positive == 1) {
+		orbital_angular_velocity = -orbital_angular_velocity;
+	}
+
+	planet->pos_x = sun->pos_x + abs(planet->orbit_radius) * cos(orbital_angular_velocity * delta_time - (float)M_PI/2);
+	planet->pos_y = sun->pos_y + abs(planet->orbit_radius) * sin(orbital_angular_velocity * delta_time - (float)M_PI/2);
+	return 0;
+}
+
+void random_spaceship_angle(Spaceship* spaceship)
+{
+	srand(time(NULL));
+	// random spaceship angle
+	spaceship->angle = rand () % 181;
+	spaceship->angle = spaceship->angle * M_PI / 180;
 }
