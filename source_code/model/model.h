@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #ifdef _WIN32
 #  define INLINE inline
 #else
@@ -38,6 +39,8 @@ typedef struct {
     int height, width;
     /* the velocity of the spaceship */
     int velocity;
+    /* the angle of the spaceship */
+    double angle;
 }Spaceship;
 
 typedef struct {
@@ -72,7 +75,9 @@ typedef struct Game_s
     Spaceship* spaceship;
     /// @brief Etat de la partie.
     /// Les valeurs possibles sont définies dans GameState.
+    bool update_planets_start;
     int state;
+    int score;
 } Game;
 
 typedef enum GameState_e
@@ -88,7 +93,8 @@ void free_universe(Universe* universe);
 Game* Game_New();
 void Game_UpdateState(Game* self);
 Spaceship* Spaceship_New(int pos_x, int pos_y);
-int update_planets(Planet* planet, Star* sun, int height, float delta_time);
+int update_planets(Planet* planet, Star* sun, float delta_time);
+void random_spaceship_angle(Spaceship* spaceship);
 
 INLINE int Game_GetState(Game* self)
 {
